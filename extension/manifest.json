@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Application HQ Auto-Tracker",
+  "version": "0.1.0",
+  "description": "Capture job application confirmations and sync locally with Application HQ.",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://hungnh1125.github.io/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Application HQ"
+  }
+}
