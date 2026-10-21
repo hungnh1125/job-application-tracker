@@ -28,3 +28,10 @@ Entries are stored in browser `localStorage` under `application-hq-v1`. They do 
 - Full-time positions around or after Spring 2027 graduation
 - AI / ML, research, LLM, backend and general software engineering
 - Explicit recording of CPT/OPT/visa eligibility (must be checked with employers and the university)
+
+## Automatic tracking (Chrome/Chromium companion extension)
+The `extension/` folder contains an unpacked Manifest V3 Chrome extension. Install it once from Chrome > Extensions > Manage Extensions > Developer mode > Load unpacked, and select the `extension` folder downloaded from this repository. Open the same browser profile on the dashboard.
+
+The extension checks recognizable application-confirmation pages on Handshake, Greenhouse, Lever, Ashby, Workday, LinkedIn, Indeed, SmartRecruiters, iCIMS, Workable, Jobvite, BambooHR and company career sites. When a clear confirmation is detected, it records a tentative Applied entry in extension-local storage and imports it into the dashboard automatically upon opening the dashboard. Use the extension popup to manually save a job when detection fails.
+
+**Coverage limitation:** This is heuristic detection, not a universal cross-platform application API. Some websites navigate within single-page flows, use uncommon confirmation screens, or provide email-only confirmations; those applications may not be detected. Always verify entries. No applications are submitted by the extension. It does not read passwords or send tracked records to a server, but its broad content-script access means you should review its source before installation. All tracking is browser-local and will not sync to different devices unless exported/imported.
