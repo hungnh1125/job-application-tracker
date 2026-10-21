@@ -23,9 +23,9 @@ const company=()=>{
 };
 const role=()=>norm(document.querySelector('h1')?.textContent)||norm(document.title.split(/[-|–]/)[0]);
 const confirmed=()=>{
- const h=norm(Array.from(document.querySelectorAll('h1,h2,[role="alert"],[role="status"]')).slice(0,18).map(n=>n.textContent).join(' ')).toLowerCase();
+ const h=norm(Array.from(document.querySelectorAll('h1,h2,[role="alert"],[role="status"],.alert,[data-testid*="alert"],[class*="toast"]')).slice(0,30).map(n=>n.textContent).join(' ')).toLowerCase();
  const path=location.pathname.toLowerCase();
- const phrase=/(application (has been |was )?(successfully )?(submitted|received)|thank you for (applying|your application)|you('ve| have) (successfully )?applied|application complete|application submitted|your application is in)/i;
+ const phrase=/(application (has been |was )?(successfully )?(submitted|received)|thank you for (applying|your application)|you('ve| have) (successfully )?applied|application complete|application submitted|your application is in|you applied on\s+\w+|application submitted!)/i;
  const urlPattern=/(application[-_/]?(submitted|success|confirmation|thankyou|thank-you)|\/thank[-_]?you\b|\/applications\/submitted)/i;
  return phrase.test(h)||(urlPattern.test(path)&&phrase.test(norm(document.body?.innerText?.slice(0,1800))));
 };
