@@ -9,7 +9,7 @@
 <section id="applications" class="hidden"><div class="panel"><div class="controls"><input id="search" type="search" placeholder="Search company, role, notes…"><select id="filter"><option value="">All stages</option></select><select id="typefilter"><option value="">All types</option><option>Internship</option><option>Full-time</option><option>Co-op</option></select></div><div class="tablewrap"><table><thead><tr><th>Company / role</th><th>Type</th><th>Stage</th><th>Applied</th><th>Deadline</th><th>Follow-up</th><th>Visa</th><th>Actions</th></tr></thead><tbody id="rows"></tbody></table></div></div></section>
 <section id="followups" class="hidden"><div class="panel"><h2>Follow-up queue</h2><p class="muted small">Sorted by next follow-up date. Set a follow-up date when saving a job.</p><div id="followlist" class="cardlist"></div></div></section>
 <section id="strategy" class="hidden"><div class="grid"><div class="panel"><h2>Application strategy</h2><p>Apply to both internships and full-time roles starting January 2027 or later. Prioritize roles suitable for software engineering experience plus PhD research.</p><ol><li>Find opportunities on Handshake, company sites, LinkedIn, Wellfound and YC.</li><li>Record each opportunity as <b>Saved</b> first, including the original link, eligibility and deadline.</li><li>Review CPT/OPT, sponsorship and graduation requirements before applying.</li><li>Apply on the employer site; then update the stage to <b>Applied</b> and record the date.</li><li>Set a follow-up date; update screening, interviews and offers.</li><li>Export a backup weekly.</li></ol></div><div class="panel"><h2>Job search shortcuts</h2><div class="cardlist"><a href="https://auburn.joinhandshake.com/stu/postings" target="_blank" rel="noopener">Handshake Auburn ↗</a><a href="https://www.linkedin.com/jobs/" target="_blank" rel="noopener">LinkedIn Jobs ↗</a><a href="https://wellfound.com/jobs" target="_blank" rel="noopener">Wellfound startups ↗</a><a href="https://www.ycombinator.com/jobs" target="_blank" rel="noopener">Y Combinator Jobs ↗</a><a href="https://simplify.jobs/" target="_blank" rel="noopener">Simplify Jobs ↗</a></div></div></div><div class="panel"><h2>Privacy and backups</h2><p>Your entries are stored in this browser only, not in the GitHub repository. Data does not automatically sync across devices. Export JSON regularly, especially before clearing browser storage. Avoid storing private application details in a public GitHub repository.</p></div></section>
-<p class="footnote">Application HQ · Browser-local tracking · Links open the actual employer's application page; clicking Apply here does not submit an application.</p></main>
+<p class="footnote"><span id="syncnote">Install the companion browser extension to capture application confirmations.</span> · Application HQ · Browser-local tracking · Links open the actual employer's application page; clicking Apply here does not submit an application.</p></main>
 <dialog id="editor"><div class="modalhead"><h2 id="modalTitle">Add application</h2></div><form method="dialog" id="form"><div class="formgrid">
 <div class="field"><label>Company *</label><input name="company" required maxlength="120"></div><div class="field"><label>Role *</label><input name="role" required maxlength="160"></div>
 <div class="field"><label>Type</label><select name="type"><option>Full-time</option><option>Internship</option><option>Co-op</option></select></div><div class="field"><label>Stage</label><select name="stage" id="stageInput"></select></div>
@@ -54,5 +54,29 @@ $('export').onclick=()=>download(JSON.stringify({version:1,exportedAt:new Date()
 $('csv').onclick=()=>{const cols=['company','role','type','stage','url','location','source','applied','deadline','followup','visa','notes'];const quote=x=>'"'+String(x??'').replace(/"/g,'""')+'"';download([cols.join(','),...jobs.map(j=>cols.map(c=>quote(j[c])).join(','))].join('\r\n'),'application-hq.csv','text/csv')};
 $('importBtn').onclick=()=>$('importFile').click();
 $('importFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const obj=JSON.parse(await file.text());const arr=Array.isArray(obj)?obj:obj.jobs;if(!Array.isArray(arr)||!arr.every(j=>j&&typeof j==='object'&&typeof j.company==='string'&&typeof j.role==='string'))throw Error('Invalid backup');if(!confirm('Replace current '+jobs.length+' entries with '+arr.length+' imported entries? Export a backup first.'))return;jobs=arr.map(j=>({...j,id:String(j.id||('job-'+Math.random())),stage:STAGES.includes(j.stage)?j.stage:'Saved',url:validUrl(j.url)||''}));save();alert('Backup restored.')}catch(err){alert('Import failed: '+err.message)}finally{e.target.value=''}};
+
+/* Receive locally captured applications from the companion browser extension.
+   Browser storage only: no account credentials or application data sent to GitHub. */
+window.addEventListener('message',event=>{
+ if(event.source!==window||event.origin!==location.origin||event.data?.type!=='APPLICATION_HQ_SYNC')return;
+ const entries=event.data.entries;
+ if(!Array.isArray(entries))return;
+ let changed=false;
+ for(const raw of entries.slice(0,2000)){
+  if(!raw||typeof raw.company!=='string'||typeof raw.role!=='string'||!raw.id?.startsWith('ext-'))continue;
+  const existing=jobs.find(j=>j.id===raw.id);
+  if(existing)continue;
+  const item={id:String(raw.id).slice(0,100),company:raw.company.slice(0,120),role:raw.role.slice(0,160),
+   url:validUrl(raw.url)||'',source:String(raw.source||'Extension').slice(0,100),
+   location:String(raw.location||'').slice(0,120),type:['Full-time','Internship','Co-op'].includes(raw.type)?raw.type:'Full-time',
+   stage:STAGES.includes(raw.stage)?raw.stage:'Saved',applied:String(raw.applied||'').slice(0,10),
+   deadline:'',followup:'',visa:'Unknown',notes:String(raw.notes||'').slice(0,500),updated:new Date().toISOString()};
+  if(jobs.some(j=>j.url===item.url&&j.applied===item.applied&&j.role===item.role))continue;
+  jobs.push(item);changed=true;
+ }
+ if(changed){save();const n=document.getElementById('syncnote');if(n)n.textContent='Browser extension synced applications successfully.';}
+});
+window.postMessage({type:'APPLICATION_HQ_REQUEST_SYNC'},location.origin);
+
 render();
 </script></body></html>
